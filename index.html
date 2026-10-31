@@ -858,7 +858,8 @@ let view="dashboard",param=null;
 function route(){
   const h=(location.hash||"").slice(1);
   const m=h.match(/^(guest|floor|room)-(.+)$/);
-  if(m){view=m[1];param=m[2]}else{view=h||"dashboard";param=null}
+  if(VIEWS[h]&&h!=="guest"&&h!=="floor"&&h!=="room"){view=h;param=null}
+  else if(m){view=m[1];param=m[2]}else{view=h||"dashboard";param=null}
   if(!VIEWS[view]){view="dashboard"}
   $(".side")?.classList.remove("open");
   renderAll(true);
