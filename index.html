@@ -749,7 +749,7 @@ function activitiesTick(force){
     g.act=a;g.loc=where;logAct(g,a,where);
     // random requests while awake and in room
     const h=hourOf(G.clock.m);
-    if(h>=7&&h<23&&rnd()<.09*p.req){const k=wpick({towels:3,pillows:2,toiletries:2,clean:1.5,drinks:1.5,maint:room.issue?3:.6,wake:h>=20?3:.2,late:G.stays[sid].departDay===today()+1?2:.1});genRequest(g,k)}
+    if(h>=7&&h<23&&rnd()<.09*p.req){const k=wpick({towels:3,pillows:2,toiletries:2,clean:room.clean<60?(room.clean<35?4:2):0,drinks:1.5,maint:room.issue?3:.6,wake:h>=20?3:.2,late:G.stays[sid].departDay===today()+1?2:.1});genRequest(g,k)}
   }
 }
 function bump(t){const f=facOf(t);if(f)f.uses++}
