@@ -893,12 +893,17 @@ function renderAll(scrollTop){
   renderNav();renderTop();renderMain(scrollTop);
   if(U.notesOpen)renderNotes();
 }
+let lastMainHTML="",lastTouch=0,touching=false;
 function renderMain(scrollTop){
   const v=$("#view");if(!v)return;
   const ae=document.activeElement;const fid=ae&&ae.id&&v.contains(ae)?ae.id:null;const sel=fid&&ae.selectionStart!=null?[ae.selectionStart,ae.selectionEnd]:null;
-  const st=v.scrollTop;
-  v.innerHTML=`<div class="wrap">${VIEWS[view]()}</div>`;
+  const html=`<div class="wrap">${VIEWS[view]()}</div>`;
+  if(!scrollTop&&html===lastMainHTML)return;
+  lastMainHTML=html;
+  const st=v.scrollTop;const sx=[...v.querySelectorAll(".tw,.tabs")].map(el=>el.scrollLeft);
+  v.innerHTML=html;
   v.scrollTop=scrollTop?0:st;
+  if(!scrollTop)v.querySelectorAll(".tw,.tabs").forEach((el,i)=>{if(sx[i])el.scrollLeft=sx[i]});
   if(fid){const el=document.getElementById(fid);if(el){el.focus();if(sel&&el.setSelectionRange)try{el.setSelectionRange(sel[0],sel[1])}catch(e){}}}
 }
 function phead(title,sub,actions){return `<div class="phead"><div><h1>${title}</h1>${sub?`<p>${sub}</p>`:""}</div>${actions?`<div class="row">${actions}</div>`:""}</div>`}
@@ -1427,6 +1432,10 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();U.note
 document.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(el&&CH[el.dataset.ch])CH[el.dataset.ch](el)});
 document.addEventListener("input",e=>{const el=e.target.closest("[data-in]");if(el){const s=U[el.dataset.in];s.q=el.value;s.page=1;renderMain()}});
 window.addEventListener("hashchange",route);
+document.addEventListener("touchstart",()=>{touching=true;lastTouch=Date.now()},{passive:true});
+document.addEventListener("touchend",()=>{touching=false;lastTouch=Date.now()},{passive:true});
+document.addEventListener("touchcancel",()=>{touching=false;lastTouch=Date.now()},{passive:true});
+document.addEventListener("scroll",()=>{lastTouch=Date.now()},{passive:true,capture:true});
 document.addEventListener("submit",e=>{if(e.target.id==="setupForm"){e.preventDefault();A.createHotel()}});
 function renderNotes(){
   $("#notes").innerHTML=`<div class="notes" role="dialog" aria-label="Notifications"><div class="ch" style="padding:8px 0;border-bottom:1px solid var(--line)"><h2>Notifications</h2><button class="btn sm" data-act="readAll">Mark all read</button></div>${G.notes.length?G.notes.slice(0,40).map(n=>`<div class="li" style="cursor:pointer" data-act="noteGo" data-id="${n.id}"><span class="pill ${n.level==="bad"?"bad":n.level==="warn"?"warn":n.level==="good"?"good":"info"}" style="padding:2px 4px"></span><div class="grow"><div class="small" style="${n.read?"color:var(--muted)":"font-weight:600"}">${esc(n.text)}</div><div class="d">${clockStr(n.m)}</div></div></div>`).join(""):`<div class="empty">No notifications.</div>`}</div>`;
@@ -1459,7 +1468,7 @@ function startLoop(){
     if(steps){
       renderTop();renderNav();
       const ae=document.activeElement;
-      if(!modalFn&&!(ae&&ae.tagName==="SELECT")&&!(ae&&ae.type==="number"))renderMain();
+      if(!modalFn&&!touching&&Date.now()-lastTouch>1500&&!(ae&&ae.tagName==="SELECT")&&!(ae&&ae.type==="number"))renderMain();
       if(U.notesOpen)renderNotes();
     }
     const now=Date.now();
